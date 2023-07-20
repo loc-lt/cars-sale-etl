@@ -9,7 +9,7 @@
 *****************/
 create table inventory (
 	id BIGSERIAL NOT NULL PRIMARY KEY,
-	quantity INT NOT NULL
+	quantity INT
 );
 
 /*****************
@@ -26,11 +26,11 @@ là inventory_id references inventory(id)
 *****************/
 create table products (
 	id BIGSERIAL NOT NULL PRIMARY KEY,
-	Year INT NOT NULL,
-	Make VARCHAR(100) NOT NULL,
-	Model VARCHAR(150) NOT NULL,
-	Category VARCHAR(100) NOT NULL,
-	created_at DATE NOT NULL,
+	Year INT,
+	Make VARCHAR(100),
+	Model VARCHAR(150),
+	Category VARCHAR(100),
+	created_at DATE,
 	inventory_id BIGSERIAL REFERENCES inventory (id)
 );
 
@@ -43,8 +43,8 @@ create table products (
 *****************/
 create table orders(
 	id BIGSERIAL NOT NULL PRIMARY KEY,
-	quantity INT NOT NULL,
-	created_at DATE NOT NULL,
+	quantity INT,
+	created_at DATE,
 	product_id BIGSERIAL REFERENCES products (id)
 );
 
@@ -75,10 +75,10 @@ create table users (
 *****************/
 create table user_details (
 	id BIGSERIAL NOT NULL PRIMARY KEY,
-	address VARCHAR(200) NOT NULL,
-	city VARCHAR(100) NOT NULL,
-	postcode INT NOT NULL,
-	country VARCHAR(100) NOT NULL,
+	address VARCHAR(200),
+	city VARCHAR(100),
+	postcode INT,
+	country VARCHAR(100),
 	user_id BIGSERIAL REFERENCES users (id)
 );
 
@@ -92,8 +92,8 @@ create table user_details (
 *****************/
 create table order_detail (
 	id BIGSERIAL NOT NULL PRIMARY KEY,
-	total BIGSERIAL NOT NULL,
-	payment VARCHAR(50) NOT NULL,
+	total BIGSERIAL,
+	payment VARCHAR(50),
 	order_id BIGSERIAL REFERENCES orders (id),
 	user_id BIGSERIAL REFERENCES users (id)
 );
