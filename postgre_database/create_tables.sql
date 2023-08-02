@@ -83,7 +83,7 @@ create table user_details (
 );
 
 /*****************
-6. orders_detail (thông tin chi tiết về các đơn bán xe)
+6. order_detail (thông tin chi tiết về các đơn bán xe)
 + id - id của thông tin chi tiết đơn bán xe
 + order_id - id của đơn bán xe (references to order(id))
 + user_id - id của người đặt mua xe (references to user(id))
