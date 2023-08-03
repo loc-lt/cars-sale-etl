@@ -1,7 +1,7 @@
 ----------------------------------------------------------------
-Wed Aug 02 20:37:32 ICT 2023:
-Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-0189-b677-cd24-0000196b8d28 
-on database directory /home/hadoop/Desktop/cars-sale-etl/etl_souce/metastore_db_bkp2 with class loader org.apache.spark.sql.hive.client.IsolatedClientLoader$$anon$1@1cac63d8 
+Thu Aug 03 14:50:09 ICT 2023:
+Booting Derby version The Apache Software Foundation - Apache Derby - 10.14.2.0 - (1828579): instance a816c00e-0189-ba60-1c5b-000003de40d8 
+on database directory /home/hadoop/Desktop/cars-sale-etl/etl_souce/metastore_db_bkp2 with class loader org.apache.spark.sql.hive.client.IsolatedClientLoader$$anon$1@6d9de26a 
 Loaded from file:/usr/local/spark/jars/derby-10.14.2.0.jar
 java.vendor=Private Build
 java.runtime.version=1.8.0_382-8u382-ga-1~20.04.1-b05
