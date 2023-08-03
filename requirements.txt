@@ -1,2 +1,1 @@
-https://www.google.com/search?channel=fs&client=ubuntu&q=AnalysisException%3A+org.apache.hadoop.hive.ql.metadata.HiveException%3A+java.lang.RuntimeException%3A+Unable+to+instantiate+org.apache.hadoop.hive.ql.metadata.SessionHiveMetaStoreClient
-MetaException(message:Error creating transactional connection factory)
+pyspark

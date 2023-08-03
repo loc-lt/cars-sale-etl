@@ -5,6 +5,7 @@ from pyspark.sql.functions import lit, max
 import sys
 import subprocess
 
+# Receive 2 arguments: tblName, executionDate
 tblName = input("Input table name from PostgreSQL which load to HDFS: ") 
 executionDate = input("Input date you want ingest data from PostgreSQL to HDFS DataLake: ")
 
@@ -13,14 +14,14 @@ year = runTime[0]
 month = runTime[1]
 day = runTime[2]
 
-# create spark session
+# Create spark session
 spark = pyspark.sql.SparkSession \
    .builder \
    .appName("Ingestion - from Postgres to HDFS") \
-   .config('spark.driver.extraClassPath', "postgresql-42.6.0.jar") \
+   .config('spark.driver.extraClassPath', "/postgre_driver_file/postgresql-42.6.0.jar") \
    .getOrCreate()
 
-# read table from db using spark jdbc
+# Read table from db using spark jdbc
 df = spark.read \
    .format("jdbc") \
    .option("url", "jdbc:postgresql://localhost:5432/my_company") \
@@ -30,7 +31,7 @@ df = spark.read \
    .option("driver", "org.postgresql.Driver") \
    .load()
 
-# function to interact with hdfs storage
+# Function to interact with hdfs storage
 def run_cmd(args_list):
     print('Running system command: {0}'.format(' '.join(args_list)))
     proc = subprocess.Popen(args_list, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -40,10 +41,9 @@ def run_cmd(args_list):
 
 tblLocation = f'hdfs://localhost:9000/datalake/{tblName}'
 
-# check whether folder exist of not
+# Check whether folder exist of not
 (ret, out, err) = run_cmd(['hdfs', 'dfs', '-du', '-s', tblLocation])
 exists = True if len(str(out).split()) > 1 else False
-print(exists)
 
 tblQuery = ""
 if exists:
@@ -53,6 +53,7 @@ if exists:
 else:
     tblQuery = f"SELECT * FROM {tblName} AS tmp"
 
+# Get the lastest records in PostgreSQL
 jdbc_df = spark.read \
    .format("jdbc") \
    .option("url", "jdbc:postgresql://localhost:5432/my_company") \
@@ -62,5 +63,6 @@ jdbc_df = spark.read \
    .option("driver", "org.postgresql.Driver") \
    .load(tblQuery)
 
+# Append records in PostreSQL from lastest record_id in HDFS Datalake
 output_df = jdbc_df.withColumn("year", lit(year)).withColumn("month", lit(month)).withColumn("day", lit(day))
 output_df.write.partitionBy("year", "month", "day").mode("append").parquet(tblLocation)

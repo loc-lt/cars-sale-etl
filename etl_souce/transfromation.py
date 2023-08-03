@@ -1,45 +1,57 @@
-##import required libraries
-import pyspark
-from pyspark import SparkContext, SQLContext, SparkConf
-from pyspark.sql import SparkSession
-from pyspark.sql.functions import lit, max
-import sys
-# ### receive arguments and initialize some variables
-# if len(sys.argv) < 2:
-#     print("No, I need two arguments!")
-# # get tblName and executionDate
-# tblName = ""
-# executionDate = ""
-# for i in range(1, len(sys.argv), 2):
-#     if sys.argv[i] == "--tblName":
-#         tblName = sys.argv[i+1]
-#     elif sys.argv[i] == "--executionDate":
-#         executionDate = sys.argv[i+1]
+import pyspark.sql.functions as f
+from pyspark.sql import SparkSession, SQLContext
+from pyspark import SparkConf, SparkContext, HiveContext
 
-# # get year, month, day from executionDate has format yyyy-mm-dd
-# runTime = executionDate.split("-")
-# year = runTime[0]
-# month = runTime[1]
-# day = runTime[2]
+# Get executionDate to transformation data from HDFS Data Lake to Data Warehouse
+executionDate = input("Input date you want transform data from HDFS DataLake and save to Hive Storage: ")
 
-##create spark session
-spark = pyspark.sql.SparkSession \
+# Get year, month, day variable from executionDate
+runTime = executionDate.split("-")
+year = runTime[0]
+month = runTime[1]
+day = runTime[2]
+
+# Create spark session
+spark = SparkSession \
    .builder \
-   .appName("Python Spark SQL basic example") \
-   .config('spark.driver.extraClassPath', "postgresql-42.6.0.jar") \
+   .appName("Daily Gross Revenue Report") \
+   .config('hive.exec.dynamic.partition', 'true') \
+   .config('hive.exec.dynamic.partition.mode', 'nonstrict') \
+   .config('spark.sql.warehouse.dir', 'hdfs://localhost:9000/user/hive/warehouse') \
+   .enableHiveSupport() \
    .getOrCreate()
 
-##read table from db using spark jdbc
-movies_df = spark.read \
-   .format("jdbc") \
-   .option("url", "jdbc:postgresql://localhost:5432/my_company") \
-   .option("dbtable", "orders") \
-   .option("user", "postgres") \
-   .option("password", "loc//14122000") \
-   .option("driver", "org.postgresql.Driver") \
-   .load()
+# Load data to spark df
+orders_df = spark.read.parquet('hdfs://localhost:9000/datalake/orders').drop("year", "month", "day")
+order_detail_df = spark.read.parquet('hdfs://localhost:9000/datalake/order_detail').drop("year", "month", "day")
+products_df = spark.read.parquet('hdfs://localhost:9000/datalake/products').drop("year", "month", "day", "created_at")
+inventory_df = spark.read.parquet('hdfs://localhost:9000/datalake/inventory').drop("year", "month", "day")
 
-##print the movies_df
-# print(tblName)
-print(movies_df.show(10))
-# print(1)
+# Join dataframe
+pre_df = orders_df \
+    .filter(orders_df["created_at"] == "2019-09-13") \
+    .join(order_detail_df, orders_df["id"] == order_detail_df["order_id"], "inner") \
+    .join(products_df, orders_df["product_id"] == products_df["id"], "inner") \
+    .join(inventory_df.select(f.col("quantity").alias("inv_quantity"), f.col("id")), products_df["inventory_id"] == inventory_df["id"], "inner")
+
+# Aggreate data
+map_df = pre_df.groupBy("Make", "Model", "Category", "product_id", "inv_quantity") \
+    .agg(
+        f.sum("quantity").alias("Sales"),
+        f.sum("total").alias("Revenue")
+    )
+
+# Prepare results
+result_df = map_df \
+    .withColumn("LetfOver", f.col("inv_quantity") - f.col("Sales")) \
+    .withColumn("year", f.lit(year)) \
+    .withColumn("month", f.lit(month)) \
+    .withColumn("day", f.lit(day)) \
+    .select("Make", "Model", "Category", "Sales", "Revenue", "year", "month", "day", "LetfOver")
+
+# Write to Data Warehouse
+result_df.write \
+    .format("hive") \
+    .partitionBy("year", "month", "day") \
+    .mode("append") \
+    .saveAsTable("reports.daily_gross_revenue")
