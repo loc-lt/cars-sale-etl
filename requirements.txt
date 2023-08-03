@@ -1,1 +1,3 @@
-pyspark
+pip==20.0.2
+pyspark==3.4.1
+subprocess

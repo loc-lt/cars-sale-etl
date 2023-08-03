@@ -29,7 +29,7 @@ inventory_df = spark.read.parquet('hdfs://localhost:9000/datalake/inventory').dr
 
 # Join dataframe
 pre_df = orders_df \
-    .filter(orders_df["created_at"] == "2019-09-13") \
+    .filter(orders_df["created_at"] == executionDate) \
     .join(order_detail_df, orders_df["id"] == order_detail_df["order_id"], "inner") \
     .join(products_df, orders_df["product_id"] == products_df["id"], "inner") \
     .join(inventory_df.select(f.col("quantity").alias("inv_quantity"), f.col("id")), products_df["inventory_id"] == inventory_df["id"], "inner")
